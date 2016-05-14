@@ -56,20 +56,14 @@ public class GameView extends SurfaceView implements Runnable{
     int screenX;
     int screenY;
 
-    // The players player
-
+    // The player
     Player player;
+    Bitmap bitmapPlayer;
 
-    ArrayList<Enemy> enemys;
+    // The enemies
+    ArrayList<Enemy> enemies;
     Enemy enemy;
     Bitmap bitmapEnemy;
-
-    // A ball
-//    Ball ball;
-
-    // Up to 200 bricks
-//    Brick[] bricks = new Brick[200];
-    int numBricks = 0;
 
     // The score
     int score = 0;
@@ -99,8 +93,12 @@ public class GameView extends SurfaceView implements Runnable{
 
     private long currentTime;
 
-    // When the we initialize (call new()) on gameView
-    // This special constructor method runs
+    /**
+     *  When the we initialize (call new()) on gameView
+     *  This special constructor method runs
+     * @param context   the context of the main activity
+     * @param activity  main activity
+     */
     public GameView(Context context, Activity activity) {
         // The next line of code asks the
         // SurfaceView class to set up our object.
@@ -119,7 +117,7 @@ public class GameView extends SurfaceView implements Runnable{
 
         screenX = size.x;
         screenY = size.y;
-        Bitmap bitmapPlayer = BitmapFactory.decodeResource(this.getResources(), R.drawable.player);
+        bitmapPlayer = BitmapFactory.decodeResource(this.getResources(), R.drawable.player);
         bitmapPlayer = Bitmap.createScaledBitmap(bitmapPlayer,
                 frameWidth * frameCount,
                 frameHeight,
@@ -128,14 +126,10 @@ public class GameView extends SurfaceView implements Runnable{
 
 
         bitmapEnemy = BitmapFactory.decodeResource(this.getResources(), R.drawable.enemy);
-        enemys = new ArrayList<Enemy>();
-        player = new Player(screenX, screenY, bitmapPlayer);
-        enemys.add(new Enemy(screenX, screenY));
+        enemies = new ArrayList<Enemy>();
+        player = new Player(screenX, screenY);
+        enemies.add(new Enemy(screenX, screenY));
 //        enemy = new Enemy(screenX, screenY);
-        // Create a ball
-//        ball = new Ball(screenX, screenY);
-
-        createBricksAndRestart();
         // Reset scores and lives
         score = 0;
         lives = 3;
@@ -145,6 +139,9 @@ public class GameView extends SurfaceView implements Runnable{
         currentTime = System.currentTimeMillis();
     }
 
+    /**
+     * Game Engine main loop
+     */
     @Override
     public void run() {
         while (playing) {
@@ -172,17 +169,19 @@ public class GameView extends SurfaceView implements Runnable{
 
     }
 
-    // Everything that needs to be updated goes in here
-    // Movement, collision detection etc.
+    /**
+     *  Everything that needs to be updated goes in here
+     *  Movement, collision detection etc.
+     */
     public void update() {
         // Move the player if required
         player.update(fps);
-        for(Enemy e : enemys){
+        for(Enemy e : enemies){
             e.update(fps);
         }
 
         if(System.currentTimeMillis() - currentTime > 2000){
-            enemys.add(new Enemy(screenX, screenY));
+            enemies.add(new Enemy(screenX, screenY));
             currentTime = System.currentTimeMillis();
         }
 
@@ -191,7 +190,9 @@ public class GameView extends SurfaceView implements Runnable{
         }
     }
 
-    // Draw the newly updated scene
+    /**
+     * Draw the newly updated scene
+     */
     public void draw() {
 
         // Make sure our drawing surface is valid or we crash
@@ -200,7 +201,6 @@ public class GameView extends SurfaceView implements Runnable{
             canvas = ourHolder.lockCanvas();
 
             // Draw the background color
-//            canvas.drawColor(Color.argb(255,  26, 128, 182));
             canvas.drawColor(Color.argb(255,  255, 255, 255));
             // Draw Line
             paint.setColor(Color.argb(255,  255, 10, 10));
@@ -210,23 +210,19 @@ public class GameView extends SurfaceView implements Runnable{
 
             // Draw the player
             getCurrentFrame();
-            canvas.drawBitmap(player.getBitmapPlayer(), frameToDraw, player.getRect(), paint);
+            canvas.drawBitmap(bitmapPlayer, frameToDraw, player.getRect(), paint);
 
-            for(int i = enemys.size()-1; i>=0 ; i--){
-                canvas.drawBitmap(bitmapEnemy, enemys.get(i).getRect().left, enemys.get(i).getRect().top, paint);
-//                Log.d("ENEMY",String.valueOf(enemys.get(i).getRect().top));
-                if(enemys.get(i).getRect().left <=50 && paused == false){
-                    enemys.remove(i);
+            for(int i = enemies.size()-1; i>=0 ; i--){
+                canvas.drawBitmap(bitmapEnemy, enemies.get(i).getRect().left, enemies.get(i).getRect().top, paint);
+                if(enemies.get(i).getRect().left <=50 && paused == false){
+                    enemies.remove(i);
                     lives--;
                 }
             }
-            // Draw the ball
-//            canvas.drawRect(ball.getRect(), paint);
-            // Draw the bricks
-            // Change the brush color for drawing
-            paint.setColor(Color.argb(255,  249, 129, 0));
 
-            // Draw the score
+
+            // Draw the lives
+            paint.setColor(Color.argb(255,  249, 129, 0));
             paint.setTextSize(40);
             canvas.drawText("   Lives: " + lives, 50,50, paint);
             // Has the player lost?
@@ -240,8 +236,10 @@ public class GameView extends SurfaceView implements Runnable{
 
     }
 
-    // If SimpleGameEngine Activity is paused/stopped
-    // shutdown our thread.
+    /**
+     * If SimpleGameEngine Activity is paused/stopped
+     * shutdown our thread.
+     */
     public void pause() {
         playing = false;
         try {
@@ -252,16 +250,24 @@ public class GameView extends SurfaceView implements Runnable{
 
     }
 
-    // If SimpleGameEngine Activity is started theb
-    // start our thread.
+
+
+    /**
+     *  If SimpleGameEngine Activity is started theb
+     *  start our thread.
+     */
     public void resume() {
         playing = true;
         gameThread = new Thread(this);
         gameThread.start();
     }
 
-    // The SurfaceView class implements onTouchListener
-    // So we can override this method and detect screen touches.
+    /**
+     *  The SurfaceView class implements onTouchListener
+     *  So we can override this method and detect screen touches.
+     * @param motionEvent
+     * @return
+     */
     @Override
     public boolean onTouchEvent(MotionEvent motionEvent) {
 
@@ -287,31 +293,15 @@ public class GameView extends SurfaceView implements Runnable{
         return true;
     }
 
-    public void createBricksAndRestart(){
-//        int brickWidth = screenX / 8;
-//        int brickHeight = screenY / 10;
-//
-//        // Build a wall of bricks
-//        numBricks = 0;
-//
-//        for(int column = 0; column < 8; column ++ ){
-//            for(int row = 0; row < 3; row ++ ){
-//                bricks[numBricks] = new Brick(row, column, brickWidth, brickHeight);
-//                numBricks ++;
-//            }
-//        }
-//        // Put the ball back to the start
-//        ball.reset(screenX, screenY);
-
-    }
-
+    /**
+     * control player action
+     * @param keyCode
+     * @param event
+     * @return
+     */
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         paused = false;
-
-//        Log.d("KEY_DOWN", String.valueOf(event.getAction()));
-//        Log.d("KEY", String.valueOf(keyCode));
-//        player.setMovementState(player.UP);
         switch (keyCode){
             case 19:
                 // Up;
@@ -330,14 +320,15 @@ public class GameView extends SurfaceView implements Runnable{
                 player.setMovementState(player.RIGHT);
                 break;
             case 62:
+                // Attack (space)
                 // Check for enemy colliding with player
                 lastFrameChangeTime = System.currentTimeMillis();
                 currentFrame = 1;
-                for(int i = enemys.size() - 1; i >= 0; i--){
-                    Log.d("COLLISION", "Player:"+String.valueOf(player.getRect().toString()));
-                    Log.d("COLLISION", "Player:"+String.valueOf(enemys.get(i).getRect().toString()));
-                    if(RectF.intersects(player.getRect(),enemys.get(i).getRect())) {
-                        enemys.remove(i);
+                for(int i = enemies.size() - 1; i >= 0; i--){
+//                    Log.d("COLLISION", "Player:"+String.valueOf(player.getRect().toString()));
+//                    Log.d("COLLISION", "Player:"+String.valueOf(enemies.get(i).getRect().toString()));
+                    if(RectF.intersects(player.getRect(),enemies.get(i).getRect())) {
+                        enemies.remove(i);
                     }
                 }
                 player.setMovementState(player.STOPPED);
@@ -346,13 +337,22 @@ public class GameView extends SurfaceView implements Runnable{
         return true;
     }
 
+    /**
+     * enforce the player to stop when key up
+     * @param keyCode
+     * @param event
+     * @return
+     */
     @Override
-    public boolean onKeyUp(int keyCode, KeyEvent msg) {
-        Log.d("KEY_UP", String.valueOf(msg.getAction()));
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+//        Log.d("KEY_UP", String.valueOf(event.getAction()));
         player.setMovementState(player.STOPPED);
         return true;
     }
 
+    /**
+     * Get player attacking animation frame
+     */
     public void getCurrentFrame(){
 
         long time  = System.currentTimeMillis();
